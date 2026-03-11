@@ -26,4 +26,11 @@ class AppImageProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void updateImageOcrText(int index, String newOcrText) {
+    if (index >= 0 && index < _images.length) {
+      _images[index].ocrText = newOcrText;
+      notifyListeners();
+    }
+  }
 }

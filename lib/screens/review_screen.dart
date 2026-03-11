@@ -1,13 +1,31 @@
 
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:myapp/models/captured_image.dart';
 import 'package:myapp/providers/image_provider.dart';
 import 'package:myapp/services/export_service.dart';
 import 'package:provider/provider.dart';
 
-class ReviewScreen extends StatelessWidget {
+class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});
+
+  @override
+  _ReviewScreenState createState() => _ReviewScreenState();
+}
+
+class _ReviewScreenState extends State<ReviewScreen> {
+  final Map<int, TextEditingController> _ocrControllers = {};
+
+  TextEditingController _getOcrController(int index, String initialText) {
+    return _ocrControllers.putIfAbsent(index, () => TextEditingController(text: initialText));
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _ocrControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   void _showEditDialog(BuildContext context, int index, CapturedImage image) {
     final titleController = TextEditingController(text: image.metadata['Título']);
@@ -73,23 +91,68 @@ class ReviewScreen extends StatelessWidget {
             itemCount: imageProvider.images.length,
             itemBuilder: (context, index) {
               final image = imageProvider.images[index];
+              final ocrController = _getOcrController(index, image.ocrText);
               return Card(
                 margin: const EdgeInsets.all(8.0),
-                child: ListTile(
-                  leading: Image.memory(image.imageData, width: 50, height: 50, fit: BoxFit.cover),
-                  title: Text(image.metadata['Título'] ?? 'Sin título'),
-                  subtitle: Text('Autor: ${image.metadata['Autor'] ?? '-'} | Estado: ${image.status.toString().split('.').last}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _showEditDialog(context, index, image),
+                      Row(
+                        children: [
+                          Image.memory(image.imageData, width: 50, height: 50, fit: BoxFit.cover),
+                          const SizedBox(width: 8.0),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(image.metadata['Título'] ?? 'Sin título', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Text('Autor: ${image.metadata['Autor'] ?? '-'} | Estado: ${image.status.toString().split('.').last}'),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _showEditDialog(context, index, image),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.check),
+                                onPressed: () {
+                                  context.read<AppImageProvider>().updateImageStatus(index, ImageStatus.completado);
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.check),
-                        onPressed: () {
-                          context.read<AppImageProvider>().updateImageStatus(index, ImageStatus.completado);
+                      const SizedBox(height: 8.0),
+                      Row(
+                        children: [
+                          const Text('Texto reconocido:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              ocrController.clear();
+                              context.read<AppImageProvider>().updateImageOcrText(index, '');
+                            },
+                            tooltip: 'Eliminar texto',
+                          ),
+                        ],
+                      ),
+                      TextField(
+                        controller: ocrController,
+                        maxLines: null,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Texto reconocido de la imagen',
+                        ),
+                        onChanged: (value) {
+                          context.read<AppImageProvider>().updateImageOcrText(index, value);
                         },
                       ),
                     ],

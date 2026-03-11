@@ -88,6 +88,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         final newImage = CapturedImage(
           imageData: Uint8List.fromList(compressedImage),
           metadata: metadata,
+          ocrText: ocrText,
         );
         if (!mounted) return;
         context.read<AppImageProvider>().addImage(newImage);

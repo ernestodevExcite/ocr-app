@@ -28,7 +28,7 @@ class ExportService {
     final blob = html.Blob([bytes]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
-      ..setAttribute("download", "juegos.csv")
+      ..setAttribute("download", "export.csv")
       ..click();
     html.Url.revokeObjectUrl(url);
   }
