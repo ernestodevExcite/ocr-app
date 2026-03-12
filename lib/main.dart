@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'screens/capture_screen.dart';
 import 'screens/review_screen.dart';
+import 'screens/queue_screen.dart';
 
 void main() {
   runApp(
@@ -39,6 +40,12 @@ final GoRouter _router = GoRouter(
         return const CaptureScreen();
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: 'queue',
+          builder: (BuildContext context, GoRouterState state) {
+            return const QueueScreen();
+          },
+        ),
         GoRoute(
           path: 'review',
           builder: (BuildContext context, GoRouterState state) {

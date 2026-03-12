@@ -1,5 +1,4 @@
 
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:myapp/models/captured_image.dart';
 import 'package:myapp/providers/image_provider.dart';
