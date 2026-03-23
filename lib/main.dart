@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'screens/capture_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/queue_screen.dart';
+import 'screens/document_type_selection_screen.dart';
 
 void main() {
   runApp(
@@ -37,9 +38,15 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) {
-        return const CaptureScreen();
+        return const DocumentTypeSelectionScreen();
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: 'capture',
+          builder: (BuildContext context, GoRouterState state) {
+            return const CaptureScreen();
+          },
+        ),
         GoRoute(
           path: 'queue',
           builder: (BuildContext context, GoRouterState state) {
@@ -62,7 +69,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primarySeedColor = Colors.blue;
+    final Color primarySeedColor = const Color(0xFF135BEC);
 
     final TextTheme appTextTheme = TextTheme(
       displayLarge: GoogleFonts.oswald(fontSize: 57, fontWeight: FontWeight.bold),
@@ -75,12 +82,13 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primarySeedColor,
         brightness: Brightness.light,
+      ).copyWith(
+        primary: primarySeedColor,
       ),
       textTheme: appTextTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: primarySeedColor,
         foregroundColor: Colors.white,
-        titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
 
@@ -89,6 +97,8 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primarySeedColor,
         brightness: Brightness.dark,
+      ).copyWith(
+        primary: primarySeedColor,
       ),
       textTheme: appTextTheme,
     );

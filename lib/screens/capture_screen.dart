@@ -276,13 +276,13 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                       ),
                     ),
                     SizedBox(height: 2),
-                    Text(
-                      'Detección automática activa',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
+                    // Text(
+                    //   'Detección automática activa',
+                    //   style: TextStyle(
+                    //     color: Colors.white70,
+                    //     fontSize: 12,
+                    //   ),
+                    // ),
                   ],
                 ),
                 Container(
