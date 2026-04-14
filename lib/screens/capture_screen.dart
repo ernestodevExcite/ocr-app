@@ -1,4 +1,3 @@
-
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +6,8 @@ import 'package:image/image.dart' as img;
 import 'package:myapp/models/captured_image.dart';
 import 'package:myapp/providers/image_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
@@ -15,7 +16,8 @@ class CaptureScreen extends StatefulWidget {
   State<CaptureScreen> createState() => _CaptureScreenState();
 }
 
-class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProviderStateMixin {
+class _CaptureScreenState extends State<CaptureScreen>
+    with SingleTickerProviderStateMixin {
   CameraController? _controller;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
@@ -37,16 +39,16 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
     _cameras = await availableCameras();
     if (_cameras != null && _cameras!.isNotEmpty) {
       _controller = CameraController(
-        _cameras![0], 
+        _cameras![0],
         ResolutionPreset.high,
         enableAudio: false,
       );
       await _controller!.initialize();
       if (!mounted) return;
-      
+
       // Set initial flash state
       await _controller!.setFlashMode(FlashMode.off);
-      
+
       setState(() {
         _isCameraInitialized = true;
       });
@@ -55,7 +57,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
 
   Future<void> _toggleFlash() async {
     if (_controller == null || !_controller!.value.isInitialized) return;
-    
+
     try {
       if (_isFlashOn) {
         await _controller!.setFlashMode(FlashMode.off);
@@ -77,7 +79,9 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
   }
 
   Future<void> _takePicture() async {
-    if (_controller == null || !_controller!.value.isInitialized || _isCapturing) {
+    if (_controller == null ||
+        !_controller!.value.isInitialized ||
+        _isCapturing) {
       return;
     }
 
@@ -87,8 +91,10 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
 
     try {
       // Show feedback
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Procesando...'), duration: Duration(milliseconds: 500)),
+      showTopSnackBar(
+        Overlay.of(context),
+        const CustomSnackBar.info(message: 'Procesando...'),
+        displayDuration: const Duration(milliseconds: 300),
       );
 
       final XFile imageFile = await _controller!.takePicture();
@@ -105,14 +111,18 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
         if (!mounted) return;
         context.read<AppImageProvider>().addImage(newImage);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Imagen capturada y agregada a la cola')),
+        showTopSnackBar(
+          Overlay.of(context),
+          const CustomSnackBar.success(message: 'Imagen capturada'),
+          dismissType: DismissType.onSwipe,
+          dismissDirection: [DismissDirection.startToEnd],
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al capturar la imagen: $e')),
+      showTopSnackBar(
+        Overlay.of(context),
+        CustomSnackBar.error(message: 'Error al capturar la imagen: $e'),
       );
     } finally {
       if (mounted) {
@@ -128,22 +138,22 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
     if (!_isCameraInitialized || _controller == null) {
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.blueAccent),
+        ),
       );
     }
-    
+
     final size = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
-    
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
           // 1. Camera Preview Full Screen
-          Positioned.fill(
-            child: CameraPreview(_controller!),
-          ),
-          
+          Positioned.fill(child: CameraPreview(_controller!)),
+
           // 2. Top Dark Gradient
           Positioned(
             top: 0,
@@ -160,7 +170,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
               ),
             ),
           ),
-          
+
           // 3. Bottom Dark Gradient
           Positioned(
             bottom: 0,
@@ -177,7 +187,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
               ),
             ),
           ),
-          
+
           // 4. Scanner Frame & Line
           Center(
             child: SizedBox(
@@ -186,15 +196,15 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: CustomPaint(
-                      painter: ScannerOverlayPainter(),
-                    ),
+                    child: CustomPaint(painter: ScannerOverlayPainter()),
                   ),
                   AnimatedBuilder(
                     animation: _animationController,
                     builder: (context, child) {
                       return Positioned(
-                        top: _animationController.value * (size.height * 0.55 - 4),
+                        top:
+                            _animationController.value *
+                            (size.height * 0.55 - 4),
                         left: 10,
                         right: 10,
                         child: child!,
@@ -209,7 +219,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                             color: Colors.blueAccent.withOpacity(0.8),
                             blurRadius: 8,
                             spreadRadius: 2,
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -219,7 +229,10 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blueAccent.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(20),
@@ -240,7 +253,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
               ),
             ),
           ),
-          
+
           // 5. Top Controls (Back, Title, Flash)
           Positioned(
             top: topPadding + 10,
@@ -301,7 +314,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
               ],
             ),
           ),
-          
+
           // 6. Bottom Controls (Gallery/Queue, Capture, Empty/Filters placeholder)
           Positioned(
             bottom: 40,
@@ -324,7 +337,11 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.white30),
                         ),
-                        child: const Icon(Icons.cloud_upload, color: Colors.white, size: 28),
+                        child: const Icon(
+                          Icons.cloud_upload,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -334,7 +351,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                     ],
                   ),
                 ),
-                
+
                 // Big Capture Button
                 GestureDetector(
                   onTap: _isCapturing ? null : _takePicture,
@@ -355,18 +372,24 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: _isCapturing 
+                          child: _isCapturing
                               ? const Padding(
                                   padding: EdgeInsets.all(12.0),
-                                  child: CircularProgressIndicator(color: Colors.blueAccent),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.blueAccent,
+                                  ),
                                 )
-                              : const Icon(Icons.camera_alt, color: Colors.black87, size: 30),
+                              : const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.black87,
+                                  size: 30,
+                                ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                
+
                 // Invisible placeholder to keep the capture button centered
                 const SizedBox(width: 60),
               ],
@@ -418,7 +441,12 @@ class ScannerOverlayPainter extends CustomPainter {
     path = Path()
       ..moveTo(size.width - cornerLength, size.height)
       ..lineTo(size.width - radius, size.height)
-      ..quadraticBezierTo(size.width, size.height, size.width, size.height - radius)
+      ..quadraticBezierTo(
+        size.width,
+        size.height,
+        size.width,
+        size.height - radius,
+      )
       ..lineTo(size.width, size.height - cornerLength);
     canvas.drawPath(path, paint);
   }
